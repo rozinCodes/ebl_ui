@@ -41,9 +41,11 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final FocusNode _passwordFocusNode = FocusNode();
   final _formKey = GlobalKey<FormState>();
+  final _passwordCheckKey = GlobalKey<FormState>();
 
   bool _isPasswordValidLength = false;
   bool _isPasswordContainsNumber = false;
+  bool _isPasswordContainsUpper = false;
   bool _isPasswordContainsSpecialCharacter = false;
 
   void _submitForm() {
@@ -64,20 +66,28 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
     _passwordController.addListener(_updatePasswordValidation);
     _passwordFocusNode.addListener(() {
-      setState(() {});
+      if (_passwordCheckKey.currentContext != null &&
+          _passwordFocusNode.hasFocus) {
+        Scrollable.ensureVisible(
+          _passwordCheckKey.currentContext!,
+          duration: const Duration(milliseconds: 1000),
+        );
+      }
     });
   }
 
   void _updatePasswordValidation() {
     final password = _passwordController.text;
-    bool hasMinLength = password.length >= 6;
+    bool hasMinLength = password.trim().length >= 6;
     bool hasNumber = password.contains(RegExp(r'\d'));
+    bool hasUpper = password.contains(RegExp(r'[A-Z]'));
     bool hasSpecialCharacter =
         password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
 
     setState(() {
       _isPasswordValidLength = hasMinLength;
       _isPasswordContainsNumber = hasNumber;
+      _isPasswordContainsUpper = hasUpper;
       _isPasswordContainsSpecialCharacter = hasSpecialCharacter;
     });
   }
@@ -110,10 +120,17 @@ class _LoginScreenState extends State<LoginScreen> {
             autoCloseDuration: const Duration(seconds: 2),
           );
         }
+      } else {
+        toastification.show(
+          title: const Text('Error'),
+          description: const Text('Fingerprint is not enabled in this device'),
+          showProgressBar: false,
+          direction: TextDirection.ltr,
+        );
       }
     } else {
       toastification.show(
-        title: const Text('Biometric is not available'),
+        title: const Text('Error'),
         description: const Text('Biometric is not available on this device'),
         showProgressBar: false,
         direction: TextDirection.ltr,
@@ -153,7 +170,6 @@ class _LoginScreenState extends State<LoginScreen> {
           centerTitle: true,
           toolbarHeight: 100,
           backgroundColor: Theme.of(context).colorScheme.onPrimary,
-          // foregroundColor: Theme.of(context).colorScheme.onPrimary,
         ),
       ),
       body: SingleChildScrollView(
@@ -170,7 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 const Align(
                   alignment: Alignment.centerLeft,
-                  child: Text('Hi',
+                  child: Text('Hello there',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -194,6 +210,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       return 'Please enter your username';
                     }
                     return null;
+                  },
+                  onFieldSubmitted: (value) {
+                    _passwordFocusNode.requestFocus();
                   },
                   decoration: InputDecoration(
                     hintText: 'Enter your username',
@@ -283,6 +302,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       return 'Please enter your password';
                     } else if (value.length < 6) {
                       return 'Password must be at least 6 characters';
+                    } else if (!value.contains(RegExp(r'\d'))) {
+                      return 'Password must contain at least one number';
+                    } else if (!value.contains(RegExp(r'[A-Z]'))) {
+                      return 'Password must contain at least one uppercase letter';
+                    } else if (!value
+                        .contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
+                      return 'Password must contain at least one special character';
                     }
                     return null;
                   },
@@ -398,6 +424,30 @@ class _LoginScreenState extends State<LoginScreen> {
                       Row(
                         children: [
                           Icon(
+                            _isPasswordContainsUpper
+                                ? Icons.check_circle
+                                : Icons.cancel,
+                            color: _isPasswordContainsUpper
+                                ? Colors.green
+                                : Colors.grey,
+                            size: 18,
+                          ),
+                          const SizedBox(
+                            width: 10,
+                          ),
+                          Text(
+                            'Password must contain at least one uppercase letter',
+                            style: TextStyle(
+                              color: _isPasswordContainsUpper
+                                  ? Colors.green
+                                  : Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Icon(
                             _isPasswordContainsSpecialCharacter
                                 ? Icons.check_circle
                                 : Icons.cancel,
@@ -447,6 +497,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Expanded(
                       child: ElevatedButton(
+                        key: _passwordCheckKey,
                         onPressed: () {
                           _submitForm();
                         },
