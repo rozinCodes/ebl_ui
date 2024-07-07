@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:toastification/toastification.dart';
 
 import 'loginScreen.dart';
 
@@ -11,16 +12,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ThemeData().colorScheme.copyWith(
-              primary: Colors.amberAccent,
-              onPrimary: Colors.white,
-            ),
-        useMaterial3: true,
+    return ToastificationWrapper(
+      child: MaterialApp(
+        title: 'Flutter Demo',
+        theme: ThemeData(
+          colorScheme: ThemeData().colorScheme.copyWith(
+                primary: Colors.amberAccent,
+                onPrimary: Colors.white,
+              ),
+          useMaterial3: true,
+        ),
+        home: const LoginScreen(title: 'EBL Clone'),
       ),
-      home: const LoginScreen(title: 'EBL Clone'),
     );
   }
 }
