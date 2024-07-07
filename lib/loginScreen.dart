@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:toastification/toastification.dart';
+import 'package:untitled/utils/toasts.dart';
 
 void main() {
   runApp(const MyApp());
@@ -35,7 +36,7 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen> with Toasts {
   bool _isSaved = false;
   final LocalAuthentication auth = LocalAuthentication();
   final TextEditingController _passwordController = TextEditingController();
@@ -97,44 +98,22 @@ class _LoginScreenState extends State<LoginScreen> {
     if (canCheckBiometrics) {
       List<BiometricType> availableBiometrics =
           await auth.getAvailableBiometrics();
-      if (availableBiometrics.contains(BiometricType.strong)) {
+      if (availableBiometrics.contains(BiometricType.strong) ||
+          availableBiometrics.contains(BiometricType.fingerprint)) {
         bool authenticated = await auth.authenticate(
           localizedReason: 'Scan your fingerprint to authenticate',
         );
         if (authenticated) {
-          toastification.show(
-            title: const Text('User authenticated'),
-            direction: TextDirection.ltr,
-            alignment: Alignment.bottomCenter,
-            type: ToastificationType.success,
-            showProgressBar: false,
-            autoCloseDuration: const Duration(seconds: 2),
-          );
+          showSuccessToast('User authenticated');
         } else {
-          toastification.show(
-            title: const Text('User not authenticated'),
-            direction: TextDirection.ltr,
-            alignment: Alignment.bottomCenter,
-            showProgressBar: false,
-            type: ToastificationType.error,
-            autoCloseDuration: const Duration(seconds: 2),
-          );
+          showErrorToast('User not authenticated');
         }
       } else {
-        toastification.show(
-          title: const Text('Error'),
-          description: const Text('Fingerprint is not enabled in this device'),
-          showProgressBar: false,
-          direction: TextDirection.ltr,
-        );
+        showErrorToast('Fingerprint is not enabled in this device');
       }
     } else {
-      toastification.show(
-        title: const Text('Error'),
-        description: const Text('Biometric is not available on this device'),
-        showProgressBar: false,
-        direction: TextDirection.ltr,
-      );
+      showErrorToast(
+          'Fingerprint authentication is not available in this device');
     }
   }
 
@@ -571,7 +550,34 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ],
-                )
+                ),
+                //circular container with circular card inside
+                const SizedBox(height: 20),
+                Container(
+                  height: 100,
+                  width: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      onTap: () {},
+                      borderRadius: BorderRadius.circular(50),
+                      splashColor: Colors.blue.withOpacity(0.5),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                        ),
+                      ), // Replaced Card with Container for flexibility
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
